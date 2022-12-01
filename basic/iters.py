@@ -12,6 +12,10 @@ def count_occurrences(iterable: t.Iterable):
     ]
 
 
+def flatten_list(list2D):
+    return list(itertools.chain(*list2D))
+
+
 def list_combinations(iterable: t.Iterable, n: int):
     '''Returns a list with combinations of given number of elements.
 
