@@ -3,11 +3,12 @@
 ## collections
 
 ```python
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 qty_by_location = defaultdict(int)
 instructions_by_wire = defaultdict(list)
 location_by_location_by_distance = defaultdict(dict)
+count_by_bit_by_position = defaultdict(lambda: Counter())
 ```
 
 # hashlib
