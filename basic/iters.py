@@ -13,7 +13,19 @@ def count_occurrences(iterable: t.Iterable):
 
 
 def list_combinations(iterable: t.Iterable, n: int):
+    '''Returns a list with combinations of given number of elements.
+
+    Example:
+        list_combinations([0, 1, 2, 3], 2) -> [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]'''
     return list(itertools.combinations(iterable, n))
+
+
+def list_sequenced_subsets(iterable: t.Iterable, n: int):
+    '''Returns a list of sequenced subsets of given number of elements.
+
+    Example:
+        list_sequenced_subsets([0, 1, 2, 3], 2) -> [[0, 1], [1, 2], [2, 3]]'''
+    return [set[i:i + n] for i in range(len(set) - (n - 1))]
 
 
 def list_unique_permutations(elements: t.Iterable):
