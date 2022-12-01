@@ -27,3 +27,6 @@ def str_to_int(s: str):
         return int(s)
     else:
         return s
+
+def lst_to_str(object):
+    return ''.join(object)
