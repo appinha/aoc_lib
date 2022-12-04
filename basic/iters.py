@@ -5,12 +5,11 @@ import typing as t
 def cycle(iterable: t.Iterable):
     return itertools.cycle(iterable)
 
-def count_occurrences(iterable: t.Iterable):
+def count_sequenced_occurrences(iterable: t.Iterable):
     return [
         {"item": k, "occurrences": len(list(v))}
         for k, v in itertools.groupby(iterable)
     ]
-
 
 def flatten_list(list2D):
     return list(itertools.chain(*list2D))
