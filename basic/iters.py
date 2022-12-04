@@ -1,3 +1,4 @@
+import collections
 import itertools
 import typing as t
 
@@ -6,7 +7,18 @@ def cycle(iterable: t.Iterable):
     return itertools.cycle(iterable)
 
 
+def count_occurrences(iterable: t.Iterable):
+    '''Returns a dict with occurrence count by item.
+    Example:
+        count_occurrences([1, 1, 1, 2, 2, 3, 1, 2]) -> {1: 4, 2: 3, 3: 1}'''
+    return collections.Counter(iterable)
+
+
 def count_sequenced_occurrences(iterable: t.Iterable):
+    '''Returns a list with occurrence count by item.
+    Example:
+        count_occurrences([1, 1, 1, 2, 2, 1, 1, 2]) -> [{item: 1, occurrences: 3},
+        {item: 2, occurrences: 2}, {item: 1, occurrences: 2}, {item: 2, occurrences: 1}]'''
     return [
         {"item": k, "occurrences": len(list(v))}
         for k, v in itertools.groupby(iterable)
