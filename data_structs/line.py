@@ -1,5 +1,5 @@
 from aoc_lib.basic.regex import find_all_integers
-from aoc_lib.graphs.coord import Coord2D
+from aoc_lib.data_structs.coord import Coord2D
 
 
 class Line():
