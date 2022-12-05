@@ -42,7 +42,7 @@ def list_sequenced_subsets(iterable: t.Iterable, n: int):
 
     Example:
         list_sequenced_subsets([0, 1, 2, 3], 2) -> [[0, 1], [1, 2], [2, 3]]'''
-    return [set[i:i + n] for i in range(len(set) - (n - 1))]
+    return [iterable[i:i + n] for i in range(len(iterable) - (n - 1))]
 
 
 def list_unique_permutations(elements: t.Iterable):
