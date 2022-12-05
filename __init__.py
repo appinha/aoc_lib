@@ -6,3 +6,4 @@ from aoc_lib.basic.types import *
 
 from aoc_lib.graphs.coord import *
 from aoc_lib.graphs.grid import *
+from aoc_lib.graphs.line import *
