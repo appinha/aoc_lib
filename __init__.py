@@ -7,3 +7,4 @@ from aoc_lib.basic.types import *
 from aoc_lib.data_structs.coord import *
 from aoc_lib.data_structs.grid import *
 from aoc_lib.data_structs.line import *
+from aoc_lib.data_structs.stack import *
