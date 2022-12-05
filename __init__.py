@@ -4,4 +4,5 @@ from aoc_lib.basic.numbers import *
 from aoc_lib.basic.regex import *
 from aoc_lib.basic.types import *
 
+from aoc_lib.graphs.coord import *
 from aoc_lib.graphs.grid import *
