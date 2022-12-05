@@ -35,5 +35,11 @@ class Line():
         if self.is_vertical():
             return [(self.start.x, y) for y in range(self.min_y, self.max_y + 1)]
         if self.is_diagonal():
-            (x1, y1), (x2, _) = sorted([self.start.tuple, self.end.tuple])
-            return ((x1 + x, y1 + x) for x in range((x2 + 1) - x1))
+            x = [self.start.x, self.end.x]
+            y = [self.start.y, self.end.y]
+            points = [(x[0], y[0])]
+            while min(x) < max(x):
+                x[0] = x[0] + 1 if x[0] < x[1] else x[0] - 1
+                y[0] = y[0] + 1 if y[0] < y[1] else y[0] - 1
+                points.append((x[0], y[0]))
+            return points
