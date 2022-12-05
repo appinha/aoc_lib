@@ -45,7 +45,10 @@ def list_sequenced_subsets(iterable: t.Iterable, n: int):
     return [iterable[i:i + n] for i in range(len(iterable) - (n - 1))]
 
 
-def list_unique_permutations(elements: t.Iterable):
+def list_unique_permutations(elements: t.Iterable, include_reversed = False):
+    if not include_reversed:
+        return list(set(itertools.permutations(elements)))
+
     reversed_permutations = set()
     unique_permutations = []
     for permutation in itertools.permutations(elements):
