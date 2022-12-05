@@ -15,7 +15,7 @@ class Coord2D():
 
     def _get_coordinates(self, data: list[int] | str) -> tuple[int, int]:
         if type(data) == list:
-            return tuple(data[0], data[1])
+            return tuple(data)
         elif type(data) == str:
             return tuple(find_all_integers(data))
         else:
