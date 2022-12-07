@@ -3,7 +3,7 @@ from aoc_lib.basic.regex import find_all_integers
 
 class Coord2D():
     def __init__(self, data: list[int] | str):
-        self.x, self.y = self._get_coordinates(data)
+        self.x, self.y = Coord2D.get(data)
         self.list = [self.x, self.y]
         self.tuple = (self.x, self.y)
 
@@ -13,7 +13,7 @@ class Coord2D():
     def __str__(self):
         return f"({self.x},{self.y})"
 
-    def _get_coordinates(self, data: list[int] | str) -> tuple[int, int]:
+    def get(data: list[int] | str) -> tuple[int, int]:
         if type(data) == list:
             return tuple(data)
         elif type(data) == str:
@@ -21,5 +21,5 @@ class Coord2D():
         else:
             raise NotImplementedError
 
-    def max_coords(tuples: list[tuple[int]]):
+    def max(tuples: list[tuple[int]]):
         return max(x for x, _ in tuples), max(y for _, y in tuples)
