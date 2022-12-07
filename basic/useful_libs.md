@@ -11,7 +11,7 @@ location_by_location_by_distance = defaultdict(dict)
 count_by_bit_by_position = defaultdict(lambda: Counter())
 ```
 
-# hashlib
+## hashlib
 
 ```python
 import hashlib
@@ -19,7 +19,19 @@ import hashlib
 md5_hexa_hash = hashlib.md5(test.encode()).hexdigest()
 ```
 
-# string
+## NamedTuples
+
+```python
+from typing import NamedTuple
+
+
+class Move(NamedTuple):
+    n: int
+    start: int
+    end: int
+```
+
+## string
 
 ```python
 from string import ascii_lowercase
