@@ -13,17 +13,50 @@ COL = 1
 
 
 class HashGrid():
-    def from_string(string: str, type, split_func=lambda row: row.split()):
+    def __init__(self, string: str, type, split_func=lambda row: row) -> None:
+        self.map = HashGrid.from_string(string, type, split_func)
+        self.len = len(self.map)
+
+    def from_string(string: str, type, split_func=lambda row: row):
         '''Returns a hashmap from a single plain string.
-        String's rows must be separated by '\n'. split_func defines row elements splitting.'''
+        String's rows must be delimited by '\n'. split_func defines how row elements are split.'''
         hashmap = collections.defaultdict(type)
         for y, line in enumerate(string.split("\n")):
             for x, value in enumerate(split_func(line)):
                 hashmap[(x, y)] = type(value)
         return hashmap
 
-    def shape(hashmap: dict):
-        return cross_sum(max(hashmap.keys()), (1, 1))
+    @property
+    def shape(self):
+        return cross_sum(max(self.map.keys()), (1, 1))
+
+    @property
+    def immediate_adjacencies_by_pos(self):
+        return {pos: self.get_immediate_adjacencies(pos) for pos in self.map}
+
+    @property
+    def orthogonal_adjacencies_by_pos(self):
+        return {pos: self.get_orthogonal_adjacencies(pos) for pos in self.map}
+
+    def is_in_map(self, pos: tuple[int, int]):
+        return (0 <= pos[X] < self.shape[X]) and (0 <= pos[Y] < self.shape[Y])
+
+    def get_immediate_adjacencies(self, pos: tuple[int, int]):
+        relative_adjs = [
+            (x, y)
+            for x in range(-1, 2)
+            for y in range(-1, 2)
+            if not (x == 0 and y == 0) and abs(x) != abs(y)
+        ]
+        absolute_adjs = [(adj[X] + pos[X], adj[Y] + pos[Y]) for adj in relative_adjs]
+        return [adj for adj in absolute_adjs if self.is_in_map(adj)]
+
+    def get_orthogonal_adjacencies(self, pos: tuple[int, int]):
+        left   = list(reversed([(i, pos[Y]) for i in range(pos[X])]))
+        top    = list(reversed([(pos[X], i) for i in range(pos[Y])]))
+        right  = [(i, pos[Y]) for i in range(*sorted([pos[X] + 1, self.shape[X]]))]
+        bottom = [(pos[X], i) for i in range(*sorted([pos[Y] + 1, self.shape[Y]]))]
+        return [left, right, top, bottom]
 
 
 class NumpyGrid():
@@ -37,7 +70,7 @@ class NumpyGrid():
         np.all(np_matrix > number, axis=Grid.row_axis) -> [True False False False False]
     '''
 
-    def from_string(string: str, type, split_func=lambda row: row.split()):
+    def from_string(string: str, type, split_func=lambda row: [e for e in row]):
         '''Returns a numpy matrix from a single plain string.
         String's rows must be separated by '\n'. Callback defines row elements splitting.'''
         return np.asarray([split_func(row) for row in string.split("\n")], dtype=type)
