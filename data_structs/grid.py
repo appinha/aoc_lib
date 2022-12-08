@@ -1,5 +1,6 @@
 import collections
 import numpy as np
+from pprint import pprint
 from aoc_lib.basic.numbers import *
 from aoc_lib.basic.types import *
 
@@ -16,6 +17,13 @@ class HashGrid():
     def __init__(self, string: str, type, split_func=lambda row: row) -> None:
         self.map = HashGrid.from_string(string, type, split_func)
         self.len = len(self.map)
+
+    def __repr__(self) -> str:
+        pprint(self.map)
+        return ""
+
+    def __getitem__(self, key):
+        return self.map[key]
 
     def from_string(string: str, type, split_func=lambda row: row):
         '''Returns a hashmap from a single plain string.
@@ -59,7 +67,7 @@ class HashGrid():
         return [left, right, top, bottom]
 
 
-class NumpyGrid():
+class Grid():
     '''Examples of useful numpy methods:
         np.where(condition) -> returns indexes where condition is met.
         np.where(np_matrix == number) -> [[i1_row, i2_row], [i1_col, i2_col]]
@@ -69,6 +77,23 @@ class NumpyGrid():
         np.all(np_matrix > number) -> False
         np.all(np_matrix > number, axis=Grid.row_axis) -> [True False False False False]
     '''
+    def __init__(self, **kwargs) -> None:
+        self.grid = self._generate_grid(**kwargs)
+        self.shape = self.grid.shape
+        self.positions = np.ndindex(self.grid.shape)
+        self.len = np.prod(self.shape)
+
+    def __repr__(self) -> str:
+        print(self.grid)
+        return ""
+
+    def __getitem__(self, key):
+        return self.grid[key]
+
+    def _generate_grid(self, **kwargs):
+        if "string" in kwargs.keys():
+            return Grid.from_string(**kwargs)
+        return Grid.generate(**kwargs)
 
     def from_string(string: str, type, split_func=lambda row: [e for e in row]):
         '''Returns a numpy matrix from a single plain string.
@@ -87,15 +112,26 @@ class NumpyGrid():
         else:
             return np.full(shape, fill_value)
 
-    def has_position(pos: tuple[int, int], shape: tuple[int, int]):
-        return (0 <= pos[ROW] < shape[ROW]) and (0 <= pos[COL] < shape[COL])
+    def has_position(self, pos: tuple[int, int]):
+        return (0 <= pos[ROW] < self.shape[ROW]) and (0 <= pos[COL] < self.shape[COL])
 
-    def invert(grid: np.ndarray):
-        return ~grid
+    def invert(self):
+        self.grid = ~self.grid
 
-    def sum(grid: np.ndarray):
+    def sum(self):
         '''Returns the sum of all matrix elements.'''
-        return np.sum(grid)
+        return np.sum(self.grid)
+
+    @property
+    def orthogonal_adjacencies_by_pos(self):
+        return {pos: self.get_orthogonal_adjacencies(pos) for pos in self.positions}
+
+    def get_orthogonal_adjacencies(self, pos: tuple[int, int]):
+        left   = list(reversed([(i, pos[Y]) for i in range(pos[X])]))
+        top    = list(reversed([(pos[X], i) for i in range(pos[Y])]))
+        right  = [(i, pos[Y]) for i in range(*sorted([pos[X] + 1, self.shape[X]]))]
+        bottom = [(pos[X], i) for i in range(*sorted([pos[Y] + 1, self.shape[Y]]))]
+        return [left, right, top, bottom]
 
     def list_index_tuples_where(result):
         '''Returns a list of index tuples for given results of numpy's where method.
