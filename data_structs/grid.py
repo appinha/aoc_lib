@@ -13,9 +13,9 @@ ROW = 0
 COL = 1
 
 
-class HashGrid():
-    def __init__(self, string: str, type, split_func=lambda row: row) -> None:
-        self.map = HashGrid.from_string(string, type, split_func)
+class HashmapGrid():
+    def __init__(self, string: str, dtype, split_func=lambda row: row) -> None:
+        self.map = HashmapGrid.from_string(string, dtype, split_func)
         self.len = len(self.map)
 
     def __repr__(self) -> str:
@@ -24,13 +24,13 @@ class HashGrid():
     def __getitem__(self, key):
         return self.map[key]
 
-    def from_string(string: str, type, split_func=lambda row: row):
+    def from_string(string: str, dtype, split_func=lambda row: row):
         '''Returns a hashmap from a single plain string.
         String's rows must be delimited by '\n'. split_func defines how row elements are split.'''
-        hashmap = collections.defaultdict(type)
+        hashmap = collections.defaultdict(dtype)
         for y, line in enumerate(string.split("\n")):
             for x, value in enumerate(split_func(line)):
-                hashmap[(x, y)] = type(value)
+                hashmap[(x, y)] = dtype(value)
         return hashmap
 
     @property
@@ -93,10 +93,10 @@ class Grid():
             return Grid.from_string(**kwargs)
         return Grid.generate(**kwargs)
 
-    def from_string(string: str, type, split_func=lambda row: [e for e in row]):
+    def from_string(string: str, dtype, split_func=lambda row: [e for e in row]):
         '''Returns a numpy matrix from a single plain string.
         String's rows must be separated by '\n'. Callback defines row elements splitting.'''
-        return np.asarray([split_func(row) for row in string.split("\n")], dtype=type)
+        return np.asarray([split_func(row) for row in string.split("\n")], dtype=dtype)
 
     def generate(shape: tuple[int, int], fill_value: str | int | bool):
         '''Returns a matrix of given shape filled with given fill value.
