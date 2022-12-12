@@ -19,8 +19,7 @@ class HashGrid():
         self.len = len(self.map)
 
     def __repr__(self) -> str:
-        pprint(self.map)
-        return ""
+        return repr(self.map)
 
     def __getitem__(self, key):
         return self.map[key]
@@ -39,17 +38,17 @@ class HashGrid():
         return cross_sum(max(self.map.keys()), (1, 1))
 
     @property
-    def immediate_adjacencies_by_pos(self):
-        return {pos: self.get_immediate_adjacencies(pos) for pos in self.map}
+    def adjacencies_by_pos(self):
+        return {pos: self.get_adjacencies(pos) for pos in self.map}
 
     @property
-    def orthogonal_adjacencies_by_pos(self):
-        return {pos: self.get_orthogonal_adjacencies(pos) for pos in self.map}
+    def orthogonal_neighbours_by_pos(self):
+        return {pos: self.get_orthogonal_neighbours(pos) for pos in self.map}
 
     def is_in_map(self, pos: tuple[int, int]):
         return (0 <= pos[X] < self.shape[X]) and (0 <= pos[Y] < self.shape[Y])
 
-    def get_immediate_adjacencies(self, pos: tuple[int, int]):
+    def get_adjacencies(self, pos: tuple[int, int]):
         relative_adjs = [
             (x, y)
             for x in range(-1, 2)
@@ -59,7 +58,7 @@ class HashGrid():
         absolute_adjs = [(adj[X] + pos[X], adj[Y] + pos[Y]) for adj in relative_adjs]
         return [adj for adj in absolute_adjs if self.is_in_map(adj)]
 
-    def get_orthogonal_adjacencies(self, pos: tuple[int, int]):
+    def get_orthogonal_neighbours(self, pos: tuple[int, int]):
         left   = list(reversed([(i, pos[Y]) for i in range(pos[X])]))
         top    = list(reversed([(pos[X], i) for i in range(pos[Y])]))
         right  = [(i, pos[Y]) for i in range(*sorted([pos[X] + 1, self.shape[X]]))]
@@ -84,8 +83,7 @@ class Grid():
         self.len = np.prod(self.shape)
 
     def __repr__(self) -> str:
-        print(self.grid)
-        return ""
+        return repr(self.grid)
 
     def __getitem__(self, key):
         return self.grid[key]
@@ -123,10 +121,10 @@ class Grid():
         return np.sum(self.grid)
 
     @property
-    def orthogonal_adjacencies_by_pos(self):
-        return {pos: self.get_orthogonal_adjacencies(pos) for pos in self.positions}
+    def orthogonal_neighbours_by_pos(self):
+        return {pos: self.get_orthogonal_neighbours(pos) for pos in self.positions}
 
-    def get_orthogonal_adjacencies(self, pos: tuple[int, int]):
+    def get_orthogonal_neighbours(self, pos: tuple[int, int]):
         left   = list(reversed([(i, pos[Y]) for i in range(pos[X])]))
         top    = list(reversed([(pos[X], i) for i in range(pos[Y])]))
         right  = [(i, pos[Y]) for i in range(*sorted([pos[X] + 1, self.shape[X]]))]
