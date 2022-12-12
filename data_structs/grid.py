@@ -1,6 +1,4 @@
-import collections
 import numpy as np
-from pprint import pprint
 from aoc_lib.basic.numbers import *
 from aoc_lib.basic.types import *
 
@@ -15,54 +13,62 @@ COL = 1
 
 class HashmapGrid():
     def __init__(self, string: str, dtype, split_func=lambda row: row) -> None:
-        self.map = HashmapGrid.from_string(string, dtype, split_func)
-        self.len = len(self.map)
+        '''Returns a hashmap from a single plain string.
+        String's rows must be delimited by '\n'. split_func defines how row elements are split.'''
+        self.grid = Grid(string, dtype, split_func)
+        self.shape = self.grid.shape
+        self.map = self._grid_to_map()
+        self.locations = self.map.keys()
+        self.len = len(self.locations)
 
     def __repr__(self) -> str:
-        return repr(self.map)
+        return repr(self.grid)
 
     def __getitem__(self, key):
         return self.map[key]
 
-    def from_string(string: str, dtype, split_func=lambda row: row):
-        '''Returns a hashmap from a single plain string.
-        String's rows must be delimited by '\n'. split_func defines how row elements are split.'''
-        hashmap = collections.defaultdict(dtype)
-        for y, line in enumerate(string.split("\n")):
-            for x, value in enumerate(split_func(line)):
-                hashmap[(x, y)] = dtype(value)
+    def _grid_to_map(self):
+        hashmap = {}
+        for coord in self.grid.locations:
+            hashmap[coord] = self.grid[coord]
         return hashmap
 
-    @property
-    def shape(self):
-        return cross_sum(max(self.map.keys()), (1, 1))
+    def keys(self):
+        return self.map.keys()
+
+    def values(self):
+        return self.map.values()
+
+    def has_location(self, location: tuple[int, int]):
+        return location in self.locations
+
+    def is_in_map(self, location: tuple[int, int]):
+        return self.has_location(location)
 
     @property
-    def adjacencies_by_pos(self):
-        return {pos: self.get_adjacencies(pos) for pos in self.map}
+    def neighbours_by_location(self):
+        return {location: self.get_neighbours(location) for location in self.map}
 
     @property
-    def orthogonal_neighbours_by_pos(self):
-        return {pos: self.get_orthogonal_neighbours(pos) for pos in self.map}
+    def orthogonal_neighbours_by_location(self):
+        return {location: self.get_orthogonal_neighbours(location) for location in self.map}
 
-    def is_in_map(self, pos: tuple[int, int]):
-        return (0 <= pos[X] < self.shape[X]) and (0 <= pos[Y] < self.shape[Y])
-
-    def get_adjacencies(self, pos: tuple[int, int]):
-        relative_adjs = [
+    def get_neighbours(self, location: tuple[int, int]):
+        relative_neighbours = [
             (x, y)
             for x in range(-1, 2)
             for y in range(-1, 2)
             if not (x == 0 and y == 0) and abs(x) != abs(y)
         ]
-        absolute_adjs = [(adj[X] + pos[X], adj[Y] + pos[Y]) for adj in relative_adjs]
-        return [adj for adj in absolute_adjs if self.is_in_map(adj)]
+        neighbours = [(neighbour[X] + location[X], neighbour[Y] + location[Y])
+            for neighbour in relative_neighbours]
+        return [neighbour for neighbour in neighbours if self.is_in_map(neighbour)]
 
-    def get_orthogonal_neighbours(self, pos: tuple[int, int]):
-        left   = list(reversed([(i, pos[Y]) for i in range(pos[X])]))
-        top    = list(reversed([(pos[X], i) for i in range(pos[Y])]))
-        right  = [(i, pos[Y]) for i in range(*sorted([pos[X] + 1, self.shape[X]]))]
-        bottom = [(pos[X], i) for i in range(*sorted([pos[Y] + 1, self.shape[Y]]))]
+    def get_orthogonal_neighbours(self, location: tuple[int, int]):
+        left   = list(reversed([(i, location[Y]) for i in range(location[X])]))
+        top    = list(reversed([(location[X], i) for i in range(location[Y])]))
+        right  = [(i, location[Y]) for i in range(*sorted([location[X] + 1, self.shape[X]]))]
+        bottom = [(location[X], i) for i in range(*sorted([location[Y] + 1, self.shape[Y]]))]
         return [left, right, top, bottom]
 
 
@@ -79,8 +85,8 @@ class Grid():
     def __init__(self, **kwargs) -> None:
         self.grid = self._generate_grid(**kwargs)
         self.shape = self.grid.shape
-        self.positions = np.ndindex(self.grid.shape)
-        self.len = np.prod(self.shape)
+        self.locations = np.ndindex(self.grid.shape)
+        self.len = len(self.locations)
 
     def __repr__(self) -> str:
         return repr(self.grid)
@@ -110,8 +116,11 @@ class Grid():
         else:
             return np.full(shape, fill_value)
 
-    def has_position(self, pos: tuple[int, int]):
-        return (0 <= pos[ROW] < self.shape[ROW]) and (0 <= pos[COL] < self.shape[COL])
+    def has_location(self, location: tuple[int, int]):
+        return location in self.locations
+
+    def is_in_grid(self, location: tuple[int, int]):
+        return self.has_location(location)
 
     def invert(self):
         self.grid = ~self.grid
@@ -119,17 +128,6 @@ class Grid():
     def sum(self):
         '''Returns the sum of all matrix elements.'''
         return np.sum(self.grid)
-
-    @property
-    def orthogonal_neighbours_by_pos(self):
-        return {pos: self.get_orthogonal_neighbours(pos) for pos in self.positions}
-
-    def get_orthogonal_neighbours(self, pos: tuple[int, int]):
-        left   = list(reversed([(i, pos[Y]) for i in range(pos[X])]))
-        top    = list(reversed([(pos[X], i) for i in range(pos[Y])]))
-        right  = [(i, pos[Y]) for i in range(*sorted([pos[X] + 1, self.shape[X]]))]
-        bottom = [(pos[X], i) for i in range(*sorted([pos[Y] + 1, self.shape[Y]]))]
-        return [left, right, top, bottom]
 
     def list_index_tuples_where(result):
         '''Returns a list of index tuples for given results of numpy's where method.
@@ -140,3 +138,29 @@ class Grid():
             col = result[COL][i]
             indexes.append((row, col))
         return indexes
+
+    @property
+    def neighbours_by_location(self):
+        return {location: self.get_neighbours(location) for location in self.map}
+
+    @property
+    def orthogonal_neighbours_by_location(self):
+        return {location: self.get_orthogonal_neighbours(location) for location in self.locations}
+
+    def get_neighbours(self, location: tuple[int, int]):
+        relative_neighbours = [
+            (x, y)
+            for x in range(-1, 2)
+            for y in range(-1, 2)
+            if not (x == 0 and y == 0) and abs(x) != abs(y)
+        ]
+        neighbours = [(neighbour[X] + location[X], neighbour[Y] + location[Y])
+            for neighbour in relative_neighbours]
+        return [neighbour for neighbour in neighbours if self.is_in_grid(neighbour)]
+
+    def get_orthogonal_neighbours(self, location: tuple[int, int]):
+        left   = list(reversed([(i, location[Y]) for i in range(location[X])]))
+        top    = list(reversed([(location[X], i) for i in range(location[Y])]))
+        right  = [(i, location[Y]) for i in range(*sorted([location[X] + 1, self.shape[X]]))]
+        bottom = [(location[X], i) for i in range(*sorted([location[Y] + 1, self.shape[Y]]))]
+        return [left, right, top, bottom]
