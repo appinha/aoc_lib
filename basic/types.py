@@ -28,5 +28,5 @@ def str_to_int(s: str):
     else:
         return s
 
-def lst_to_str(object):
-    return ''.join(object)
+def list_to_str(lst: list):
+    return ''.join(lst)
