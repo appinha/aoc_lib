@@ -1,4 +1,5 @@
 import numpy as np
+from enum import Enum
 from aoc_lib.basic.types import *
 from aoc_lib.data_structs.coord import *
 
@@ -171,3 +172,64 @@ class Grid():
         right  = [(i, location[Y]) for i in range(*sorted([location[X] + 1, self.shape[X]]))]
         bottom = [(location[X], i) for i in range(*sorted([location[Y] + 1, self.shape[Y]]))]
         return [left, right, top, bottom]
+
+
+class Cell(str, Enum):
+    EMPTY = " "
+    BLOCKED = "X"
+    START = "S"
+    GOAL = "G"
+    PATH = "*"
+
+
+class Maze:
+    def __init__(self, grid: list[list[str]], start: Coord2D, goal: Coord2D) -> None:
+        self.grid = grid
+        self.rows = len(grid)
+        self.cols = len(grid[0])
+        self.shape = (self.rows, self.cols)
+        self.locations = list(np.ndindex(self.shape))
+        self.start = start
+        self.goal = goal
+
+    def __repr__(self):
+        output = ""
+        for line in self.grid:
+            output += "".join(line) + "\n"
+        return output
+
+    def has_location(self, location: tuple[int, int]):
+        return location in self.locations
+
+    def test_goal(self, loc: Coord2D) -> bool:
+        return (loc.row, loc.col) == (self.goal.row, self.goal.col)
+
+    def _successor_is_viable(self, current: Coord2D, successor: Coord2D):
+        row, col = successor
+        return self.grid[row][col] != Cell.BLOCKED
+
+    def get_successors(self, loc: Coord2D) -> list[Coord2D]:
+        locations: list[Coord2D] = []
+        condition_by_potential_location = {
+            Coord2D(loc.row + 1, loc.col): loc.row + 1 < self.rows,
+            Coord2D(loc.row - 1, loc.col): loc.row - 1 >= 0,
+            Coord2D(loc.row, loc.col + 1): loc.col + 1 < self.cols,
+            Coord2D(loc.row, loc.col - 1): loc.col - 1 >= 0,
+        }
+        for potential_location, condition in condition_by_potential_location.items():
+            if condition and self._successor_is_viable(loc, potential_location):
+                locations.append(potential_location)
+
+        return locations
+
+    def mark(self, path: list[Coord2D]):
+        for location in path:
+            self.grid[location.row][location.col] = "•"
+        self.grid[self.start.row][self.start.col] = "S"
+        self.grid[self.goal.row][self.goal.col] = "E"
+
+    def clear(self, path: list[Coord2D]):
+        for location in path:
+            self.grid[location.row][location.col] = Cell.EMPTY
+        self.grid[self.start.row][self.start.col] = Cell.START
+        self.grid[self.goal.row][self.goal.col] = Cell.GOAL

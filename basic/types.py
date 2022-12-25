@@ -1,3 +1,11 @@
+from __future__ import annotations
+from typing import Callable, Generic, Optional, TypeVar
+
+
+C = TypeVar('C', bound='Comparable')
+T = TypeVar('T')
+
+
 def is_int(object: object):
     return (isinstance(object, int))
 
