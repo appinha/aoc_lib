@@ -1,6 +1,6 @@
 import numpy as np
-from aoc_lib.basic.numbers import *
 from aoc_lib.basic.types import *
+from aoc_lib.data_structs.coord import *
 
 
 X = 0
@@ -11,14 +11,19 @@ ROW = 0
 COL = 1
 
 
+def pretty_print_grid(grid: list[list], spacer: str = ""):
+    for line in grid:
+        print(spacer.join(line))
+
+
 class HashmapGrid():
-    def __init__(self, string: str, dtype, split_func=lambda row: row) -> None:
+    def __init__(self, string: str, dtype, split_func=lambda row: list(row)) -> None:
         '''Returns a hashmap from a single plain string.
         String's rows must be delimited by '\n'. split_func defines how row elements are split.'''
-        self.grid = Grid(string, dtype, split_func)
+        self.grid = Grid(string=string, dtype=dtype, split_func=split_func)
         self.shape = self.grid.shape
         self.map = self._grid_to_map()
-        self.locations = self.map.keys()
+        self.locations = list(self.map.keys())
         self.len = len(self.locations)
 
     def __repr__(self) -> str:
@@ -53,15 +58,15 @@ class HashmapGrid():
     def orthogonal_neighbours_by_location(self):
         return {location: self.get_orthogonal_neighbours(location) for location in self.map}
 
-    def get_neighbours(self, location: tuple[int, int]):
-        relative_neighbours = [
-            (x, y)
-            for x in range(-1, 2)
-            for y in range(-1, 2)
-            if not (x == 0 and y == 0) and abs(x) != abs(y)
-        ]
-        neighbours = [(neighbour[X] + location[X], neighbour[Y] + location[Y])
-            for neighbour in relative_neighbours]
+    def get_neighbours(
+        self, location: tuple[int, int], include_diagonals=False, include_outside=False
+    ):
+        orthogonal = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        diagonal   = [(1, 1), (1, -1), (-1, -1), (-1, 1)]
+        relative_neighbours = orthogonal + (diagonal if include_diagonals else [])
+        neighbours = [cross_sum(location, neighbour) for neighbour in relative_neighbours]
+        if include_outside:
+            return neighbours
         return [neighbour for neighbour in neighbours if self.is_in_map(neighbour)]
 
     def get_orthogonal_neighbours(self, location: tuple[int, int]):
@@ -85,21 +90,28 @@ class Grid():
     def __init__(self, **kwargs) -> None:
         self.grid = self._generate_grid(**kwargs)
         self.shape = self.grid.shape
-        self.locations = np.ndindex(self.grid.shape)
+        self.locations = list(np.ndindex(self.grid.shape))
         self.len = len(self.locations)
 
     def __repr__(self) -> str:
         return repr(self.grid)
 
+    def __setitem__(self, key, value):
+        self.grid[key] = value
+
     def __getitem__(self, key):
         return self.grid[key]
+
+    @property
+    def value_by_location(self):
+        return {location: self.grid[location] for location in self.locations}
 
     def _generate_grid(self, **kwargs):
         if "string" in kwargs.keys():
             return Grid.from_string(**kwargs)
         return Grid.generate(**kwargs)
 
-    def from_string(string: str, dtype, split_func=lambda row: [e for e in row]):
+    def from_string(string: str, dtype, split_func=lambda row: list(row)):
         '''Returns a numpy matrix from a single plain string.
         String's rows must be separated by '\n'. Callback defines row elements splitting.'''
         return np.asarray([split_func(row) for row in string.split("\n")], dtype=dtype)
@@ -117,7 +129,7 @@ class Grid():
             return np.full(shape, fill_value)
 
     def has_location(self, location: tuple[int, int]):
-        return location in self.locations
+        return location[ROW] < self.shape[ROW] and location[COL] < self.shape[COL]
 
     def is_in_grid(self, location: tuple[int, int]):
         return self.has_location(location)
@@ -148,14 +160,9 @@ class Grid():
         return {location: self.get_orthogonal_neighbours(location) for location in self.locations}
 
     def get_neighbours(self, location: tuple[int, int]):
-        relative_neighbours = [
-            (x, y)
-            for x in range(-1, 2)
-            for y in range(-1, 2)
-            if not (x == 0 and y == 0) and abs(x) != abs(y)
-        ]
+        orthogonal_neighbours = [(-1, 0), (0, -1), (0, 1), (1, 0)]
         neighbours = [(neighbour[X] + location[X], neighbour[Y] + location[Y])
-            for neighbour in relative_neighbours]
+            for neighbour in orthogonal_neighbours]
         return [neighbour for neighbour in neighbours if self.is_in_grid(neighbour)]
 
     def get_orthogonal_neighbours(self, location: tuple[int, int]):
