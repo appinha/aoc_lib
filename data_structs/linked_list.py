@@ -12,6 +12,9 @@ class GraphNode(Generic[T]):
         self.cost: float = cost
         self.heuristic: float = heuristic
 
+    def __repr__(self) -> str:
+        return f"GraphNode(state: {self.state}, cost: {self.cost}, heuristic: {self.heuristic})"
+
     def __lt__(self, other: GraphNode) -> bool:
         return (self.cost + self.heuristic) < (other.cost + other.heuristic)
 
