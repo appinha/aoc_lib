@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Generic, Optional, TypeVar
+from typing import Any, Callable, Deque, Generic, NamedTuple, Optional, TypeVar
 
 
 C = TypeVar('C', bound='Comparable')
