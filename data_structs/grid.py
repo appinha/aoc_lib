@@ -247,7 +247,7 @@ class Cell(str, Enum):
     BLOCKED = "X"
     START = "S"
     GOAL = "G"
-    PATH = "*"
+    PATH = "•"
 
 
 class Maze:
@@ -292,9 +292,9 @@ class Maze:
 
     def mark(self, path: list[Coord2D]):
         for location in path:
-            self.grid[location.row][location.col] = "•"
-        self.grid[self.start.row][self.start.col] = "S"
-        self.grid[self.goal.row][self.goal.col] = "E"
+            self.grid[location.row][location.col] = Cell.PATH
+        self.grid[self.start.row][self.start.col] = Cell.START
+        self.grid[self.goal.row][self.goal.col] = Cell.GOAL
 
     def clear(self, path: list[Coord2D]):
         for location in path:
