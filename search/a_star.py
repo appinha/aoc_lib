@@ -4,14 +4,14 @@ from aoc_lib.data_structs.queues import PriorityQueue
 
 
 def a_star(
-    initial_node: T,
+    start: T,
     test_goal: Callable[[T], bool],
-    get_successors: Callable[[T], list[T]],
+    list_successors: Callable[[T], list[T]],
     heuristic: Callable[[T], float],
 ) -> Optional[GraphNode[T]]:
     queue: PriorityQueue[GraphNode[T]] = PriorityQueue()  # where we have yet to go
-    queue.push(GraphNode(initial_node, None, 0.0, heuristic(initial_node)))
-    visited: dict[T, float] = {initial_node: 0.0}  # where we have been
+    queue.push(GraphNode(start, None, 0.0, heuristic(start)))
+    visited: dict[T, float] = {start: 0.0}  # where we have been
 
     # keep going while there is more to visit
     while not queue.empty:
@@ -22,7 +22,7 @@ def a_star(
             return current_node
 
         # check where we can go next and haven't visited
-        for child in get_successors(current_state):
+        for child in list_successors(current_state):
             # 1 assumes a grid, need a cost function for more sophisticated applications
             new_cost = current_node.cost + 1
             if child not in visited or visited[child] > new_cost:
@@ -30,4 +30,3 @@ def a_star(
                 queue.push(GraphNode(child, current_node, new_cost, heuristic(child)))
 
     return None  # went through everything and never found goal
-
