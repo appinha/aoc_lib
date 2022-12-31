@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 from enum import Enum
 from aoc_lib.basic.types import *
@@ -12,74 +13,70 @@ ROW = 0
 COL = 1
 
 
-def pretty_print_grid(grid: list[list], spacer: str = ""):
+def pretty_print_grid(grid: list[list[T]], spacer: str = ""):
     for line in grid:
         print(spacer.join(line))
+    print()
 
 
-class HashmapGrid():
-    def __init__(self, string: str, dtype, split_func=lambda row: list(row)) -> None:
-        '''Returns a hashmap from a single plain string.
-        String's rows must be delimited by '\n'. split_func defines how row elements are split.'''
-        self.grid = Grid(string=string, dtype=dtype, split_func=split_func)
-        self.shape = self.grid.shape
-        self.map = self._grid_to_map()
-        self.locations = list(self.map.keys())
-        self.len = len(self.locations)
+def print_path(grid: Grid | list[list[T]], start: Coord2D, goal: Coord2D, path: list[Coord2D]):
+    for location in path:
+        grid[location.row][location.col] = "•"
+    grid[start.row][start.col] = "S"
+    grid[goal.row][goal.col] = "G"
+    pretty_print_grid(grid)
 
-    def __repr__(self) -> str:
-        return repr(self.grid)
 
-    def __getitem__(self, key):
-        return self.map[key]
+def string_to_grid(string: str, dtype=str, split_func=lambda row: list(row)):
+    '''Returns a numpy matrix from a single plain string.
+    String's rows must be separated by '\n'. Callback defines row elements splitting.'''
+    return np.asarray([split_func(row) for row in string.split("\n")], dtype=dtype)
 
-    def _grid_to_map(self):
-        hashmap = {}
-        for coord in self.grid.locations:
-            hashmap[coord] = self.grid[coord]
-        return hashmap
 
-    def keys(self):
-        return self.map.keys()
+def generate_grid(shape: tuple[int, int], fill_value: str | int | bool):
+    '''Returns a matrix of given shape filled with given fill value.
+    Example: create_filled_with((10, 10), 0)'''
+    if fill_value == True:
+        return np.ones(shape, dtype=bool)
+    elif fill_value == False:
+        return np.zeros(shape, dtype=bool)
+    elif is_int(fill_value) or fill_value.isdigit():
+        return np.full(shape, fill_value, dtype=int)
+    else:
+        return np.full(shape, fill_value)
 
-    def values(self):
-        return self.map.values()
 
-    def has_location(self, location: tuple[int, int]):
-        return location in self.locations
+def list_neighbours(
+    location: tuple[int, int],
+    has_location: Callable[[tuple[int, int]], bool],
+    include_diagonals=False,
+    include_outside=False
+):
+    orthogonal = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    diagonal   = [(1, 1), (1, -1), (-1, -1), (-1, 1)]
+    relative_neighbours = orthogonal + (diagonal if include_diagonals else [])
+    neighbours = [cross_sum(location, neighbour) for neighbour in relative_neighbours]
+    if include_outside:
+        return neighbours
+    return [neighbour for neighbour in neighbours if has_location(neighbour)]
 
-    def is_in_map(self, location: tuple[int, int]):
-        return self.has_location(location)
 
-    @property
-    def neighbours_by_location(self):
-        return {location: self.get_neighbours(location) for location in self.map}
-
-    @property
-    def orthogonal_neighbours_by_location(self):
-        return {location: self.get_orthogonal_neighbours(location) for location in self.map}
-
-    def get_neighbours(
-        self, location: tuple[int, int], include_diagonals=False, include_outside=False
-    ):
-        orthogonal = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        diagonal   = [(1, 1), (1, -1), (-1, -1), (-1, 1)]
-        relative_neighbours = orthogonal + (diagonal if include_diagonals else [])
-        neighbours = [cross_sum(location, neighbour) for neighbour in relative_neighbours]
-        if include_outside:
-            return neighbours
-        return [neighbour for neighbour in neighbours if self.is_in_map(neighbour)]
-
-    def get_orthogonal_neighbours(self, location: tuple[int, int]):
-        left   = list(reversed([(i, location[Y]) for i in range(location[X])]))
-        top    = list(reversed([(location[X], i) for i in range(location[Y])]))
-        right  = [(i, location[Y]) for i in range(*sorted([location[X] + 1, self.shape[X]]))]
-        bottom = [(location[X], i) for i in range(*sorted([location[Y] + 1, self.shape[Y]]))]
-        return [left, right, top, bottom]
+def list_orthogonal_neighbours(location: tuple[int, int], shape: tuple[int, int]):
+    left   = list(reversed([(i, location[Y]) for i in range(location[X])]))
+    top    = list(reversed([(location[X], i) for i in range(location[Y])]))
+    right  = [(i, location[Y]) for i in range(*sorted([location[X] + 1, shape[X]]))]
+    bottom = [(location[X], i) for i in range(*sorted([location[Y] + 1, shape[Y]]))]
+    return [left, right, top, bottom]
 
 
 class Grid():
-    '''Examples of useful numpy methods:
+    '''Returns a numpy grid wrapper with many useful methods and syntax sugars.
+    Grid can be generated from a single plain string or with given shape and fill_value.
+    Usage examples:
+        Grid(string=raw_input, dtype=int)
+        Grid(shape=(6, 6), fill_value=False)
+
+    Examples of useful numpy methods:
         np.where(condition) -> returns indexes where condition is met.
         np.where(np_matrix == number) -> [[i1_row, i2_row], [i1_col, i2_col]]
 
@@ -90,12 +87,16 @@ class Grid():
     '''
     def __init__(self, **kwargs) -> None:
         self.grid = self._generate_grid(**kwargs)
+        self.dtype = kwargs["dtype"] if "dtype" in kwargs else type(kwargs["fill_value"])
         self.shape = self.grid.shape
+        self.rows_len = self.shape[ROW]
+        self.cols_len = self.shape[COL]
         self.locations = list(np.ndindex(self.grid.shape))
         self.len = len(self.locations)
 
     def __repr__(self) -> str:
-        return repr(self.grid)
+        pretty_print_grid(self.grid.tolist(), " ")
+        return ""
 
     def __setitem__(self, key, value):
         self.grid[key] = value
@@ -107,33 +108,8 @@ class Grid():
     def value_by_location(self):
         return {location: self.grid[location] for location in self.locations}
 
-    def _generate_grid(self, **kwargs):
-        if "string" in kwargs.keys():
-            return Grid.from_string(**kwargs)
-        return Grid.generate(**kwargs)
-
-    def from_string(string: str, dtype, split_func=lambda row: list(row)):
-        '''Returns a numpy matrix from a single plain string.
-        String's rows must be separated by '\n'. Callback defines row elements splitting.'''
-        return np.asarray([split_func(row) for row in string.split("\n")], dtype=dtype)
-
-    def generate(shape: tuple[int, int], fill_value: str | int | bool):
-        '''Returns a matrix of given shape filled with given fill value.
-        Example: create_filled_with((10, 10), 0)'''
-        if fill_value == True:
-            return np.ones(shape, dtype=bool)
-        elif fill_value == False:
-            return np.zeros(shape, dtype=bool)
-        elif is_int(fill_value) or fill_value.isdigit():
-            return np.full(shape, fill_value, dtype=int)
-        else:
-            return np.full(shape, fill_value)
-
-    def has_location(self, location: tuple[int, int]):
-        return location[ROW] < self.shape[ROW] and location[COL] < self.shape[COL]
-
-    def is_in_grid(self, location: tuple[int, int]):
-        return self.has_location(location)
+    def tolist(self):
+        return self.grid.tolist()
 
     def invert(self):
         self.grid = ~self.grid
@@ -142,9 +118,15 @@ class Grid():
         '''Returns the sum of all matrix elements.'''
         return np.sum(self.grid)
 
-    def list_index_tuples_where(result):
+    def has_location(self, location: tuple[int, int]):
+        return location in self.locations
+
+    def is_in_grid(self, location: tuple[int, int]):
+        return self.has_location(location)
+
+    def list_indexes_where(result):
         '''Returns a list of index tuples for given results of numpy's where method.
-        Example: get_index_tuples_where(np.where(matrix > 0))'''
+        Example: list_indexes_where(np.where(matrix > 0))'''
         indexes = []
         for i in range(len(result[0])):
             row = result[ROW][i]
@@ -154,24 +136,110 @@ class Grid():
 
     @property
     def neighbours_by_location(self):
-        return {location: self.get_neighbours(location) for location in self.map}
+        return {location: self.list_neighbours(location) for location in self.locations}
 
     @property
     def orthogonal_neighbours_by_location(self):
-        return {location: self.get_orthogonal_neighbours(location) for location in self.locations}
+        return {location: self.list_orthogonal_neighbours(location) for location in self.locations}
 
-    def get_neighbours(self, location: tuple[int, int]):
-        orthogonal_neighbours = [(-1, 0), (0, -1), (0, 1), (1, 0)]
-        neighbours = [(neighbour[X] + location[X], neighbour[Y] + location[Y])
-            for neighbour in orthogonal_neighbours]
-        return [neighbour for neighbour in neighbours if self.is_in_grid(neighbour)]
+    def list_neighbours(
+        self, location: tuple[int, int], include_diagonals=False, include_outside=False
+    ):
+        return list_neighbours(location, self.has_location, include_diagonals, include_outside)
 
-    def get_orthogonal_neighbours(self, location: tuple[int, int]):
-        left   = list(reversed([(i, location[Y]) for i in range(location[X])]))
-        top    = list(reversed([(location[X], i) for i in range(location[Y])]))
-        right  = [(i, location[Y]) for i in range(*sorted([location[X] + 1, self.shape[X]]))]
-        bottom = [(location[X], i) for i in range(*sorted([location[Y] + 1, self.shape[Y]]))]
-        return [left, right, top, bottom]
+    def list_orthogonal_neighbours(self, location: tuple[int, int]):
+        return list_orthogonal_neighbours(location, self.shape)
+
+    def _generate_grid(self, **kwargs):
+        if "string" in kwargs.keys():
+            return string_to_grid(**kwargs)
+        return generate_grid(**kwargs)
+
+
+HashmapGridMapType = dict[tuple[int, int], str | int | bool]
+
+
+def pretty_print_hashmap_grid(hashmap_grid: HashmapGrid | HashmapGridMapType, shape=None):
+    if shape:
+        pretty_print_grid(hashmap_to_grid(hashmap_grid, shape))
+    else:
+        pretty_print_grid(hashmap_to_grid(hashmap_grid.map, hashmap_grid.shape))
+
+
+def hashmap_to_grid(hashmap: HashmapGridMapType, shape: tuple[int, int], dtype=str):
+    fill_value = " "
+    if dtype == int:
+        fill_value = 1
+    if dtype == bool:
+        fill_value = True
+
+    grid = Grid(shape=shape, fill_value=fill_value)
+    for location, value in hashmap.items():
+        grid[location] = value
+    return grid
+
+
+class HashmapGrid():
+    def __init__(self, string: str, dtype=str, split_func=lambda row: list(row)) -> None:
+        '''Returns a hashmap wrapper generated from a single plain string.
+        String's rows must be delimited by '\n'. split_func defines how row elements are split.'''
+        self.map, self.shape = self._string_to_map(string=string, dtype=dtype, split_func=split_func)
+        self.dtype = dtype
+        self.rows_len = self.shape[ROW]
+        self.cols_len = self.shape[COL]
+        self.locations = list(self.map.keys())
+        self.len = len(self.locations)
+
+    def __repr__(self) -> str:
+        pretty_print_grid(self.hashmap_to_grid(), " ")
+        return ""
+
+    def __setitem__(self, key, value):
+        self.map[key] = value
+
+    def __getitem__(self, key):
+        return self.map[key]
+
+    def keys(self):
+        return self.map.keys()
+
+    def values(self):
+        return self.map.values()
+
+    def items(self):
+        return self.map.items()
+
+    def hashmap_to_grid(self):
+        return hashmap_to_grid(self.map, self.shape, self.dtype)
+
+    def has_location(self, location: tuple[int, int]):
+        return location in self.map
+
+    def is_in_map(self, location: tuple[int, int]):
+        return self.has_location(location)
+
+    @property
+    def neighbours_by_location(self):
+        return {location: self.list_neighbours(location) for location in self.map}
+
+    @property
+    def orthogonal_neighbours_by_location(self):
+        return {location: self.list_orthogonal_neighbours(location) for location in self.map}
+
+    def list_neighbours(
+        self, location: tuple[int, int], include_diagonals=False, include_outside=False
+    ):
+        return list_neighbours(location, self.has_location, include_diagonals, include_outside)
+
+    def list_orthogonal_neighbours(self, location: tuple[int, int]):
+        return list_orthogonal_neighbours(location, self.shape)
+
+    def _string_to_map(self, **kwargs):
+        grid = Grid(**kwargs)
+        hashmap = {}
+        for coord in grid.locations:
+            hashmap[coord] = grid[coord]
+        return hashmap, grid.shape
 
 
 class Cell(str, Enum):
@@ -201,14 +269,14 @@ class Maze:
     def has_location(self, location: tuple[int, int]):
         return location in self.locations
 
-    def test_goal(self, loc: Coord2D) -> bool:
-        return (loc.row, loc.col) == (self.goal.row, self.goal.col)
+    def test_goal(self, location: Coord2D) -> bool:
+        return (location.row, location.col) == (self.goal.row, self.goal.col)
 
     def _successor_is_viable(self, current: Coord2D, successor: Coord2D):
         row, col = successor
         return self.grid[row][col] != Cell.BLOCKED
 
-    def get_successors(self, loc: Coord2D) -> list[Coord2D]:
+    def list_successors(self, loc: Coord2D) -> list[Coord2D]:
         locations: list[Coord2D] = []
         condition_by_potential_location = {
             Coord2D(loc.row + 1, loc.col): loc.row + 1 < self.rows,
