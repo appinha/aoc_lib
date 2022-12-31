@@ -12,7 +12,7 @@ def euclidean_distance(goal: Coord2D) -> Callable[[Coord2D], float]:
 
 
 def calc_euclidean_distance(origin: tuple[int, int], destination: tuple[int, int]) -> float:
-    return euclidean_distance(Coord2D(destination))(Coord2D(origin))
+    return euclidean_distance(Coord2D(*destination))(Coord2D(*origin))
 
 
 def manhattan_distance(goal: Coord2D) -> Callable[[Coord2D], float]:
@@ -24,4 +24,4 @@ def manhattan_distance(goal: Coord2D) -> Callable[[Coord2D], float]:
 
 
 def calc_manhattan_distance(origin: tuple[int, int], destination: tuple[int, int]) -> float:
-    return manhattan_distance(Coord2D(destination))(Coord2D(origin))
+    return manhattan_distance(Coord2D(*destination))(Coord2D(*origin))

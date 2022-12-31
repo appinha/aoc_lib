@@ -4,24 +4,24 @@ import re
 
 
 class Coord2D(NamedTuple):
-    x: int
-    y: int
+    row: int
+    col: int
 
     @property
-    def row(self):
-        return self.x
+    def x(self):
+        return self.row
 
     @property
-    def col(self):
-        return self.y
+    def y(self):
+        return self.col
 
     @property
     def as_list(self):
-        return [self.x, self.y]
+        return [self.row, self.col]
 
     @property
     def as_tuple(self):
-        return (self.x, self.y)
+        return (self.row, self.col)
 
 
 def string_to_tuple(string: str):
