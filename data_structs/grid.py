@@ -13,6 +13,16 @@ ROW = 0
 COL = 1
 
 
+N, S, E, W = (0, -1), (0, 1), (1, 0), (-1, 0)
+NE = cross_sum(N, E)
+NW = cross_sum(N, W)
+SE = cross_sum(S, E)
+SW = cross_sum(S, W)
+
+CARDINAL = N, S, E, W
+ORDINAL = NW, NE, SE, SW
+
+
 def pretty_print_grid(grid: list[list[T]], spacer: str = ""):
     for line in grid:
         print(spacer.join(line))
@@ -46,19 +56,21 @@ def generate_grid(shape: tuple[int, int], fill_value: str | int | bool):
         return np.full(shape, fill_value)
 
 
+def grid_has_location(location: tuple[int, int], shape: tuple[int, int]):
+    return 0 <= location[X] < shape[X] and 0 <= location[Y] < shape[Y]
+
+
 def list_neighbours(
     location: tuple[int, int],
-    has_location: Callable[[tuple[int, int]], bool],
+    shape: tuple[int, int],
     include_diagonals=False,
     include_outside=False
 ):
-    orthogonal = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-    diagonal   = [(1, 1), (1, -1), (-1, -1), (-1, 1)]
-    relative_neighbours = orthogonal + (diagonal if include_diagonals else [])
+    relative_neighbours = CARDINAL + (ORDINAL if include_diagonals else [])
     neighbours = [cross_sum(location, neighbour) for neighbour in relative_neighbours]
     if include_outside:
         return neighbours
-    return [neighbour for neighbour in neighbours if has_location(neighbour)]
+    return [neighbour for neighbour in neighbours if grid_has_location(neighbour, shape)]
 
 
 def list_orthogonal_neighbours(location: tuple[int, int], shape: tuple[int, int]):
@@ -119,7 +131,7 @@ class Grid():
         return np.sum(self.grid)
 
     def has_location(self, location: tuple[int, int]):
-        return location in self.locations
+        return grid_has_location(location, self.shape)
 
     def is_in_grid(self, location: tuple[int, int]):
         return self.has_location(location)
@@ -145,7 +157,7 @@ class Grid():
     def list_neighbours(
         self, location: tuple[int, int], include_diagonals=False, include_outside=False
     ):
-        return list_neighbours(location, self.has_location, include_diagonals, include_outside)
+        return list_neighbours(location, self.shape, include_diagonals, include_outside)
 
     def list_orthogonal_neighbours(self, location: tuple[int, int]):
         return list_orthogonal_neighbours(location, self.shape)
@@ -229,7 +241,7 @@ class HashmapGrid():
     def list_neighbours(
         self, location: tuple[int, int], include_diagonals=False, include_outside=False
     ):
-        return list_neighbours(location, self.has_location, include_diagonals, include_outside)
+        return list_neighbours(location, self.shape, include_diagonals, include_outside)
 
     def list_orthogonal_neighbours(self, location: tuple[int, int]):
         return list_orthogonal_neighbours(location, self.shape)
