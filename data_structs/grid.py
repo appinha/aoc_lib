@@ -75,7 +75,7 @@ def list_neighbours(
     include_diagonals=False,
     include_outside=False
 ):
-    relative_neighbours = CARDINAL + (ORDINAL if include_diagonals else [])
+    relative_neighbours = list(CARDINAL) + (list(ORDINAL) if include_diagonals else [])
     neighbours = [cross_sum(location, neighbour) for neighbour in relative_neighbours]
     if include_outside:
         return neighbours
