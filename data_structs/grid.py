@@ -12,7 +12,6 @@ Z = 2
 ROW = 0
 COL = 1
 
-
 N, S, E, W = (0, -1), (0, 1), (1, 0), (-1, 0)
 NE = cross_sum(N, E)
 NW = cross_sum(N, W)
@@ -23,17 +22,27 @@ CARDINAL = N, S, E, W
 ORDINAL = NW, NE, SE, SW
 
 
+class Cell(str, Enum):
+    EMPTY = " "
+    BLOCKED = "X"
+    START = "S"
+    GOAL = "G"
+    PATH = "•"
+
+
 def pretty_print_grid(grid: list[list[T]], spacer: str = ""):
     for line in grid:
         print(spacer.join(line))
     print()
 
 
-def print_path(grid: Grid | list[list[T]], start: Coord2D, goal: Coord2D, path: list[Coord2D]):
+def print_path_in_grid(
+    grid: Grid | list[list[T]], start: Coord2D, goal: Coord2D, path: list[Coord2D]
+):
     for location in path:
-        grid[location.row][location.col] = "•"
-    grid[start.row][start.col] = "S"
-    grid[goal.row][goal.col] = "G"
+        grid[location.row][location.col] = Cell.PATH
+    grid[start.row][start.col] = Cell.START
+    grid[goal.row][goal.col] = Cell.GOAL
     pretty_print_grid(grid)
 
 
@@ -79,6 +88,12 @@ def list_orthogonal_neighbours(location: tuple[int, int], shape: tuple[int, int]
     right  = [(i, location[Y]) for i in range(*sorted([location[X] + 1, shape[X]]))]
     bottom = [(location[X], i) for i in range(*sorted([location[Y] + 1, shape[Y]]))]
     return [left, right, top, bottom]
+
+
+def list_indexes_where(result):
+    '''Returns a list of index tuples for given results of numpy's where method.
+    Example: list_indexes_where(np.where(matrix > 0))'''
+    return [(result[ROW][i], result[COL][i]) for i in range(len(result[0]))]
 
 
 class Grid():
@@ -136,19 +151,10 @@ class Grid():
     def is_in_grid(self, location: tuple[int, int]):
         return self.has_location(location)
 
-    def list_indexes_where(result):
-        '''Returns a list of index tuples for given results of numpy's where method.
-        Example: list_indexes_where(np.where(matrix > 0))'''
-        indexes = []
-        for i in range(len(result[0])):
-            row = result[ROW][i]
-            col = result[COL][i]
-            indexes.append((row, col))
-        return indexes
-
     @property
-    def neighbours_by_location(self):
-        return {location: self.list_neighbours(location) for location in self.locations}
+    def neighbours_by_location(self, include_diagonals=False, include_outside=False):
+        return {location: self.list_neighbours(location, include_diagonals, include_outside)
+            for location in self.locations}
 
     @property
     def orthogonal_neighbours_by_location(self):
@@ -231,8 +237,9 @@ class HashmapGrid():
         return self.has_location(location)
 
     @property
-    def neighbours_by_location(self):
-        return {location: self.list_neighbours(location) for location in self.map}
+    def neighbours_by_location(self, include_diagonals=False, include_outside=False):
+        return {location: self.list_neighbours(location, include_diagonals, include_outside)
+            for location in self.map}
 
     @property
     def orthogonal_neighbours_by_location(self):
@@ -254,20 +261,12 @@ class HashmapGrid():
         return hashmap, grid.shape
 
 
-class Cell(str, Enum):
-    EMPTY = " "
-    BLOCKED = "X"
-    START = "S"
-    GOAL = "G"
-    PATH = "•"
-
-
-class Maze:
+class Maze():
     def __init__(self, grid: list[list[str]], start: Coord2D, goal: Coord2D) -> None:
         self.grid = grid
-        self.rows = len(grid)
-        self.cols = len(grid[0])
-        self.shape = (self.rows, self.cols)
+        self.rows_len = len(grid)
+        self.cols_len = len(grid[0])
+        self.shape = (self.rows_len, self.cols_len)
         self.locations = list(np.ndindex(self.shape))
         self.start = start
         self.goal = goal
@@ -279,7 +278,7 @@ class Maze:
         return output
 
     def has_location(self, location: tuple[int, int]):
-        return location in self.locations
+        return grid_has_location(location, self.shape)
 
     def test_goal(self, location: Coord2D) -> bool:
         return (location.row, location.col) == (self.goal.row, self.goal.col)
@@ -288,18 +287,12 @@ class Maze:
         row, col = successor
         return self.grid[row][col] != Cell.BLOCKED
 
-    def list_successors(self, loc: Coord2D) -> list[Coord2D]:
+    def list_successors(self, location: Coord2D) -> list[Coord2D]:
         locations: list[Coord2D] = []
-        condition_by_potential_location = {
-            Coord2D(loc.row + 1, loc.col): loc.row + 1 < self.rows,
-            Coord2D(loc.row - 1, loc.col): loc.row - 1 >= 0,
-            Coord2D(loc.row, loc.col + 1): loc.col + 1 < self.cols,
-            Coord2D(loc.row, loc.col - 1): loc.col - 1 >= 0,
-        }
-        for potential_location, condition in condition_by_potential_location.items():
-            if condition and self._successor_is_viable(loc, potential_location):
-                locations.append(potential_location)
-
+        for direction in CARDINAL:
+            neighbour = Coord2D(*cross_sum(location.as_tuple, direction))
+            if self.has_location(neighbour) and self._successor_is_viable(location, neighbour):
+                locations.append(neighbour)
         return locations
 
     def mark(self, path: list[Coord2D]):
