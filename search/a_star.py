@@ -1,4 +1,5 @@
-from aoc_lib.basic.types import *
+from typing import Callable, Optional
+from aoc_lib.basic.types import T
 from aoc_lib.data_structs.linked_list import GraphNode
 from aoc_lib.data_structs.queues import PriorityQueue
 

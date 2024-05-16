@@ -1,6 +1,6 @@
-from aoc_lib.basic.types import *
-from typing import Deque
 from heapq import heappush, heappop
+from typing import Deque, Generic
+from aoc_lib.basic.types import T
 
 
 class Queue(Generic[T]):

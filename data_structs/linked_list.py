@@ -1,11 +1,15 @@
 from __future__ import annotations
-from aoc_lib.basic.types import *
-from typing import Deque
+from typing import Deque, Generic, Optional
+from aoc_lib.basic.types import T
 
 
 class GraphNode(Generic[T]):
     def __init__(
-        self, state: T, parent: Optional[GraphNode], cost: float = 0.0, heuristic: float = 0.0,
+        self,
+        state: T,
+        parent: Optional[GraphNode],
+        cost: float = 0.0,
+        heuristic: float = 0.0,
     ) -> None:
         self.state: T = state
         self.parent: Optional[GraphNode] = parent

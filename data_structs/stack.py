@@ -1,4 +1,5 @@
-from aoc_lib.basic.types import *
+from typing import Generic, List
+from aoc_lib.basic.types import T
 
 
 class Stack(Generic[T]):

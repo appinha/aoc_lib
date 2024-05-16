@@ -1,17 +1,33 @@
 from __future__ import annotations
-from typing import Any, Callable, Deque, Generic, Iterable, NamedTuple, Optional, TypeVar
+from typing import Any, TypeVar
+from typing_extensions import Protocol
 
 
-C = TypeVar('C', bound='Comparable')
-T = TypeVar('T')
+class Comparable(Protocol):
+    def __eq__(self, other: Any) -> bool: ...
+
+    def __lt__(self: C, other: C) -> bool: ...
+
+    def __gt__(self: C, other: C) -> bool:
+        return (not self < other) and self != other
+
+    def __le__(self: C, other: C) -> bool:
+        return self < other or self == other
+
+    def __ge__(self: C, other: C) -> bool:
+        return not self < other
+
+
+C = TypeVar("C", bound="Comparable")
+T = TypeVar("T")
 
 
 def is_int(object: object):
-    return (isinstance(object, int))
+    return isinstance(object, int)
 
 
 def is_float(object: object):
-    return (isinstance(object, float))
+    return isinstance(object, float)
 
 
 def is_number(object: object):
@@ -19,15 +35,15 @@ def is_number(object: object):
 
 
 def is_str(object: object):
-    return (isinstance(object, str))
+    return isinstance(object, str)
 
 
 def is_list(object: object):
-    return (isinstance(object, list))
+    return isinstance(object, list)
 
 
 def is_dict(object: object):
-    return (isinstance(object, dict))
+    return isinstance(object, dict)
 
 
 def str_to_int(s: str):
@@ -36,5 +52,6 @@ def str_to_int(s: str):
     else:
         return s
 
+
 def list_to_str(lst: list):
-    return ''.join(lst)
+    return "".join(lst)

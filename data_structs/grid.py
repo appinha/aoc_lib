@@ -1,8 +1,8 @@
 from __future__ import annotations
 import numpy as np
 from enum import Enum
-from aoc_lib.basic.types import *
-from aoc_lib.data_structs.coord import *
+from aoc_lib.basic.types import T, is_int
+from aoc_lib.data_structs.coord import Coord2D, cross_sum
 
 
 X = 0
@@ -37,7 +37,10 @@ def pretty_print_grid(grid: list[list[T]], spacer: str = ""):
 
 
 def print_path_in_grid(
-    grid: Grid | list[list[T]], start: Coord2D, goal: Coord2D, path: list[Coord2D]
+    grid: Grid | list[list[T]],
+    start: Coord2D,
+    goal: Coord2D,
+    path: list[Coord2D],
 ):
     for location in path:
         grid[location.row][location.col] = Cell.PATH
@@ -47,17 +50,18 @@ def print_path_in_grid(
 
 
 def string_to_grid(string: str, dtype=str, split_func=lambda row: list(row)):
-    '''Returns a numpy matrix from a single plain string.
-    String's rows must be separated by '\n'. Callback defines row elements splitting.'''
+    """Returns a numpy matrix from a single plain string.
+    String's rows must be separated by '\n'. Callback defines row elements splitting.
+    """
     return np.asarray([split_func(row) for row in string.split("\n")], dtype=dtype)
 
 
 def generate_grid(shape: tuple[int, int], fill_value: str | int | bool):
-    '''Returns a matrix of given shape filled with given fill value.
-    Example: create_filled_with((10, 10), 0)'''
-    if fill_value == True:
+    """Returns a matrix of given shape filled with given fill value.
+    Example: create_filled_with((10, 10), 0)"""
+    if fill_value is True:
         return np.ones(shape, dtype=bool)
-    elif fill_value == False:
+    elif fill_value is False:
         return np.zeros(shape, dtype=bool)
     elif is_int(fill_value) or fill_value.isdigit():
         return np.full(shape, fill_value, dtype=int)
@@ -73,7 +77,7 @@ def list_neighbours(
     location: tuple[int, int],
     shape: tuple[int, int],
     include_diagonals=False,
-    include_outside=False
+    include_outside=False,
 ):
     relative_neighbours = list(CARDINAL) + (list(ORDINAL) if include_diagonals else [])
     neighbours = [cross_sum(location, neighbour) for neighbour in relative_neighbours]
@@ -83,24 +87,25 @@ def list_neighbours(
 
 
 def list_orthogonal_neighbours(location: tuple[int, int], shape: tuple[int, int]):
-    left   = list(reversed([(i, location[Y]) for i in range(location[X])]))
-    top    = list(reversed([(location[X], i) for i in range(location[Y])]))
-    right  = [(i, location[Y]) for i in range(*sorted([location[X] + 1, shape[X]]))]
+    left = list(reversed([(i, location[Y]) for i in range(location[X])]))
+    top = list(reversed([(location[X], i) for i in range(location[Y])]))
+    right = [(i, location[Y]) for i in range(*sorted([location[X] + 1, shape[X]]))]
     bottom = [(location[X], i) for i in range(*sorted([location[Y] + 1, shape[Y]]))]
     return [left, right, top, bottom]
 
 
 def list_indexes_where(result):
-    '''Returns a list of index tuples for given results of numpy's where method.
-    Example: list_indexes_where(np.where(matrix > 0))'''
+    """Returns a list of index tuples for given results of numpy's where method.
+    Example: list_indexes_where(np.where(matrix > 0))"""
     return [(result[ROW][i], result[COL][i]) for i in range(len(result[0]))]
 
 
-class Grid():
-    '''Returns a numpy grid wrapper with many useful methods and syntax sugars.
+class Grid:
+    """Returns a numpy grid wrapper with many useful methods and syntax sugars.
     Grid can be generated from a single plain string or with given shape and fill_value.
     Usage examples:
         Grid(string=raw_input, dtype=int)
+        Grid(string=raw_input, dtype=str)
         Grid(shape=(6, 6), fill_value=False)
 
     Examples of useful numpy methods:
@@ -111,10 +116,10 @@ class Grid():
         np.all(condition) -> returns boolean if all elements meet condition.
         np.all(np_matrix > number) -> False
         np.all(np_matrix > number, axis=Grid.row_axis) -> [True False False False False]
-    '''
+    """
+
     def __init__(self, **kwargs) -> None:
         self.grid = self._generate_grid(**kwargs)
-        self.dtype = kwargs["dtype"] if "dtype" in kwargs else type(kwargs["fill_value"])
         self.shape = self.grid.shape
         self.rows_len = self.shape[ROW]
         self.cols_len = self.shape[COL]
@@ -132,6 +137,14 @@ class Grid():
         return self.grid[key]
 
     @property
+    def dtype(self, **kwargs):
+        if "dtype" in kwargs:
+            return kwargs["dtype"]
+        if "string" in kwargs:
+            return str
+        return type(kwargs["fill_value"])
+
+    @property
     def value_by_location(self):
         return {location: self.grid[location] for location in self.locations}
 
@@ -142,7 +155,7 @@ class Grid():
         self.grid = ~self.grid
 
     def sum(self):
-        '''Returns the sum of all matrix elements.'''
+        """Returns the sum of all matrix elements."""
         return np.sum(self.grid)
 
     def has_location(self, location: tuple[int, int]):
@@ -153,15 +166,20 @@ class Grid():
 
     @property
     def neighbours_by_location(self, include_diagonals=False, include_outside=False):
-        return {location: self.list_neighbours(location, include_diagonals, include_outside)
-            for location in self.locations}
+        return {
+            location: self.list_neighbours(location, include_diagonals, include_outside)
+            for location in self.locations
+        }
 
     @property
     def orthogonal_neighbours_by_location(self):
         return {location: self.list_orthogonal_neighbours(location) for location in self.locations}
 
     def list_neighbours(
-        self, location: tuple[int, int], include_diagonals=False, include_outside=False
+        self,
+        location: tuple[int, int],
+        include_diagonals=False,
+        include_outside=False,
     ):
         return list_neighbours(location, self.shape, include_diagonals, include_outside)
 
@@ -197,11 +215,14 @@ def hashmap_to_grid(hashmap: HashmapGridMapType, shape: tuple[int, int], dtype=s
     return grid
 
 
-class HashmapGrid():
+class HashmapGrid:
     def __init__(self, string: str, dtype=str, split_func=lambda row: list(row)) -> None:
-        '''Returns a hashmap wrapper generated from a single plain string.
-        String's rows must be delimited by '\n'. split_func defines how row elements are split.'''
-        self.map, self.shape = self._string_to_map(string=string, dtype=dtype, split_func=split_func)
+        """Returns a hashmap wrapper generated from a single plain string.
+        String's rows must be delimited by '\n'. split_func defines how row elements are split.
+        """
+        self.map, self.shape = self._string_to_map(
+            string=string, dtype=dtype, split_func=split_func
+        )
         self.dtype = dtype
         self.rows_len = self.shape[ROW]
         self.cols_len = self.shape[COL]
@@ -238,15 +259,20 @@ class HashmapGrid():
 
     @property
     def neighbours_by_location(self, include_diagonals=False, include_outside=False):
-        return {location: self.list_neighbours(location, include_diagonals, include_outside)
-            for location in self.map}
+        return {
+            location: self.list_neighbours(location, include_diagonals, include_outside)
+            for location in self.map
+        }
 
     @property
     def orthogonal_neighbours_by_location(self):
         return {location: self.list_orthogonal_neighbours(location) for location in self.map}
 
     def list_neighbours(
-        self, location: tuple[int, int], include_diagonals=False, include_outside=False
+        self,
+        location: tuple[int, int],
+        include_diagonals=False,
+        include_outside=False,
     ):
         return list_neighbours(location, self.shape, include_diagonals, include_outside)
 
@@ -261,7 +287,7 @@ class HashmapGrid():
         return hashmap, grid.shape
 
 
-class Maze():
+class Maze:
     def __init__(self, grid: list[list[str]], start: Coord2D, goal: Coord2D) -> None:
         self.grid = grid
         self.rows_len = len(grid)

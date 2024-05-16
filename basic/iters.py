@@ -1,51 +1,48 @@
 import collections
 import itertools
-import typing as t
+from typing import Iterable
 
 
-def cycle(iterable: t.Iterable):
+def cycle(iterable: Iterable):
     return itertools.cycle(iterable)
 
 
-def count_occurrences(iterable: t.Iterable):
-    '''Returns a dict with occurrence count by item.
+def count_occurrences(iterable: Iterable):
+    """Returns a dict with occurrence count by item.
     Example:
-        count_occurrences([1, 1, 1, 2, 2, 3, 1, 2]) -> {1: 4, 2: 3, 3: 1}'''
+        count_occurrences([1, 1, 1, 2, 2, 3, 1, 2]) -> {1: 4, 2: 3, 3: 1}"""
     return collections.Counter(iterable)
 
 
-def count_sequenced_occurrences(iterable: t.Iterable):
-    '''Returns a list with occurrence count by item.
+def count_sequenced_occurrences(iterable: Iterable):
+    """Returns a list with occurrence count by item.
     Example:
         count_occurrences([1, 1, 1, 2, 2, 1, 1, 2]) -> [{item: 1, occurrences: 3},
-        {item: 2, occurrences: 2}, {item: 1, occurrences: 2}, {item: 2, occurrences: 1}]'''
-    return [
-        {"item": k, "occurrences": len(list(v))}
-        for k, v in itertools.groupby(iterable)
-    ]
+        {item: 2, occurrences: 2}, {item: 1, occurrences: 2}, {item: 2, occurrences: 1}]"""
+    return [{"item": k, "occurrences": len(list(v))} for k, v in itertools.groupby(iterable)]
 
 
 def flatten_list(list2D):
     return list(itertools.chain(*list2D))
 
 
-def list_combinations(iterable: t.Iterable, n: int):
-    '''Returns a list with combinations of given number of elements.
+def list_combinations(iterable: Iterable, n: int):
+    """Returns a list with combinations of given number of elements.
 
     Example:
-        list_combinations([0, 1, 2, 3], 2) -> [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]'''
+        list_combinations([0, 1, 2, 3], 2) -> [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]"""
     return list(itertools.combinations(iterable, n))
 
 
-def list_sequenced_subsets(iterable: t.Iterable, n: int):
-    '''Returns a list of sequenced subsets of given number of elements.
+def list_sequenced_subsets(iterable: Iterable, n: int):
+    """Returns a list of sequenced subsets of given number of elements.
 
     Example:
-        list_sequenced_subsets([0, 1, 2, 3], 2) -> [[0, 1], [1, 2], [2, 3]]'''
-    return [iterable[i:i + n] for i in range(len(iterable) - (n - 1))]
+        list_sequenced_subsets([0, 1, 2, 3], 2) -> [[0, 1], [1, 2], [2, 3]]"""
+    return [iterable[i : i + n] for i in range(len(iterable) - (n - 1))]
 
 
-def list_unique_permutations(elements: t.Iterable, include_reversed = False):
+def list_unique_permutations(elements: Iterable, include_reversed=False):
     if not include_reversed:
         return list(set(itertools.permutations(elements)))
 
